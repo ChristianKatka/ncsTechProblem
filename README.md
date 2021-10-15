@@ -27,8 +27,11 @@ Print out function output from ​**points**​ ​(x, y): (0,0), (100, 100), (1
 
 # Run
 How to test my solution:
+
 -download zip
+
 -unzip
+
 
 After that run following commands:
 
