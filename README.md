@@ -35,7 +35,7 @@ How to test my solution:
 
 After that run following commands:
 
-`cd ./ncsTechProblem`
+`cd ./ncsTechProblem-master`
 
 `npm i`
 
