@@ -31,9 +31,13 @@ How to test my solution:
 -unzip
 
 After that run following commands:
+
 `cd ./ncsTechProblem`
+
 `npm i`
+
 `npm run start`
+
 
 # Live site
 
