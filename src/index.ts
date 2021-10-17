@@ -1,92 +1,99 @@
 import { of } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { TwoDimensionalSpace } from './models/two-dimensional-space.model';
-import { RichLinkStationData } from './models/rich-link-station-data.model';
-import { VeryRichLinkStationData } from './models/very-rich-link-station-data.model';
-import { calculateLinearDistanceBetweenTwoPoints } from './helpers/calculate-distance-between-two-points.helper';
-import { linkStations } from './link-stations';
-import { deviceLocations } from './device-locations';
+import { Location } from './models/location.model';
+import { LinkStationDraft, LinkStation } from './models/link-station.model';
+import { calculateLinearDistanceBetweenTwoPoints } from './helpers/calculate-distance-between-two-points';
+import { calculatePower } from './helpers/calculate-power';
+import { getLinkStations } from './services/link-station.service';
+import { getDevices } from './services/device.service';
 
 const calculateDistanceBetweenDeviceAndEachLinkStation = (
-  deviceLocation: TwoDimensionalSpace
-): RichLinkStationData[] =>
+  linkStations: number[][],
+  deviceLocation: Location
+): LinkStationDraft[] =>
   linkStations.map((linkStationValues: number[]) => {
-    const linkStationXposition = linkStationValues[0];
-    const linkStationYposition = linkStationValues[1];
-    const linkStationReach = linkStationValues[2];
+    const x = linkStationValues[0];
+    const y = linkStationValues[1];
+    const reach = linkStationValues[2];
 
-    const stationLocation: TwoDimensionalSpace = {
-      x: linkStationXposition,
-      y: linkStationYposition,
+    const linkStationLocation: Location = {
+      x,
+      y,
     };
 
     const distanceBetweenDeviceAndLinkStation =
-      calculateLinearDistanceBetweenTwoPoints(deviceLocation, stationLocation);
+      calculateLinearDistanceBetweenTwoPoints(
+        deviceLocation,
+        linkStationLocation
+      );
 
     return {
       distanceBetweenDeviceAndLinkStation,
-      linkStationXposition,
-      linkStationYposition,
-      linkStationReach,
+      location: { x, y },
+      reach,
     };
   });
 
 const calculateLinkStationsPower = (
-  richLinkStationDatas: RichLinkStationData[]
-): VeryRichLinkStationData[] =>
-  richLinkStationDatas.map((station: RichLinkStationData) => {
+  linkStations: LinkStationDraft[]
+): LinkStation[] =>
+  linkStations.map((station: LinkStationDraft) => {
     const distanceIsBiggerThanReach =
-      station.distanceBetweenDeviceAndLinkStation > station.linkStationReach;
+      station.distanceBetweenDeviceAndLinkStation > station.reach;
+
     if (distanceIsBiggerThanReach) {
       return { ...station, power: 0 };
     } else {
       return {
         ...station,
-        power: Math.pow(
-          station.linkStationReach -
-            station.distanceBetweenDeviceAndLinkStation,
-          2
+        power: calculatePower(
+          station.reach,
+          station.distanceBetweenDeviceAndLinkStation
         ),
       };
     }
   });
 
-const calculateBestLinkStationForDevice = (
-  veryRichStationDatas: VeryRichLinkStationData[],
-  deviceLocation: TwoDimensionalSpace
-) => {
-  const stationWithMostPower: VeryRichLinkStationData =
-    veryRichStationDatas.reduce((prev, curr) =>
-      prev.power > curr.power ? prev : curr
-    );
+const checkTheMostOptimalLinkStationForDevice = (
+  linkStation: LinkStation[],
+  deviceLocation: Location
+): string => {
+  const stationWithMostPower: LinkStation = linkStation.reduce((prev, curr) =>
+    prev.power > curr.power ? prev : curr
+  );
   if (stationWithMostPower.power === 0) {
     return `No link station within reach for point x:${deviceLocation.x}, y:${deviceLocation.y}`;
   } else {
     return `Best link station for point (x:${deviceLocation.x},y:${
       deviceLocation.y
-    }) is (x:${stationWithMostPower.linkStationXposition},y:${
-      stationWithMostPower.linkStationYposition
+    }) is (x:${stationWithMostPower.location.y},y:${
+      stationWithMostPower.location.x
     }) with power: ${Math.round(stationWithMostPower.power * 1000) / 1000}`;
   }
 };
 
-const calculateMostSuitableStationForGivenDevices = (
-  deviceLocations: TwoDimensionalSpace[]
-) =>
-  deviceLocations.map((deviceLocation: TwoDimensionalSpace) => {
-    const subscription = of(
-      calculateDistanceBetweenDeviceAndEachLinkStation(deviceLocation)
-    )
-      .pipe(
-        map((x) => calculateLinkStationsPower(x)),
-        map((x) => calculateBestLinkStationForDevice(x, deviceLocation))
-      )
-      .subscribe({
-        next: (bestLinkStationForDevice: string) =>
-          console.log(bestLinkStationForDevice),
-        error: (e) => console.error(e),
-        complete: () => subscription.unsubscribe(),
-      });
+const tryFindMostOptimalLinkStationForGivenDevices = (
+  deviceLocations: Location[]
+): string[] =>
+  deviceLocations.map((deviceLocation: Location) => {
+    const linkStationDrafts: LinkStationDraft[] =
+      calculateDistanceBetweenDeviceAndEachLinkStation(
+        getLinkStations(),
+        deviceLocation
+      );
+
+    const linkStations: LinkStation[] =
+      calculateLinkStationsPower(linkStationDrafts);
+
+    const mostOptimalLinkStationForGivenDevice: string =
+      checkTheMostOptimalLinkStationForDevice(linkStations, deviceLocation);
+
+    return mostOptimalLinkStationForGivenDevice;
   });
 
-calculateMostSuitableStationForGivenDevices(deviceLocations);
+const mostOptimalLinkStationForGivenDevices: string[] =
+  tryFindMostOptimalLinkStationForGivenDevices(getDevices());
+  
+mostOptimalLinkStationForGivenDevices.forEach(
+  (mostOptimalLinkstation: string) => console.log(mostOptimalLinkstation)
+);
