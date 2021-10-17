@@ -1,5 +1,3 @@
-import { of } from 'rxjs';
-import { map } from 'rxjs/operators';
 import { Location } from './models/location.model';
 import { LinkStationDraft, LinkStation } from './models/link-station.model';
 import { calculateLinearDistanceBetweenTwoPoints } from './helpers/calculate-distance-between-two-points';
@@ -91,9 +89,10 @@ const tryFindMostOptimalLinkStationForGivenDevices = (
     return mostOptimalLinkStationForGivenDevice;
   });
 
+
 const mostOptimalLinkStationForGivenDevices: string[] =
   tryFindMostOptimalLinkStationForGivenDevices(getDevices());
-  
+
 mostOptimalLinkStationForGivenDevices.forEach(
   (mostOptimalLinkstation: string) => console.log(mostOptimalLinkstation)
 );
