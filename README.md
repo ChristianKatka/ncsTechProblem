@@ -42,6 +42,3 @@ After that run following commands:
 `npm run start`
 
 
-# Live site
-
-You can find live version of the application by clicking: [link](https://daraoas6mlbbi.cloudfront.net/)
