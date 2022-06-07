@@ -1,3 +1,7 @@
+# Hei
+Katso mielummin uusin ja edistyksekkäin äppini jonka olen rakentanut [github clap app](https://github.com/ChristianKatka/clap-app-public)
+
+
 # Welcome to ncs tech problem!
 
 Write a program that solves the most suitable (with most power) link station for a device at given point [x,y].
